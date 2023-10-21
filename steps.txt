@@ -1,0 +1,12 @@
+installed nvm
+installed nvm latest active node
+started using latest active node version
+installed vscode
+added nodejs to system environment pathing
+did a global npm install of yarn
+used yarn create vite to create a vite + vue + typescript project template
+added volar(vue3) extension
+added prettier extension
+added eslint extension
+added vue 3 typescript extension ( Needs override for it to be used in workspace )
+Configure eslint and prettier: https://vueschool.io/articles/vuejs-tutorials/eslint-and-prettier-with-vite-and-vue-js-3/
