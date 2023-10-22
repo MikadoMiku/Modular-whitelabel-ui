@@ -1,37 +1,35 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import BasicModularComponent from './components/BasicModularComponent.vue'
+import BasicModularAddOverlay from './components/BasicModularAddOverlay.vue'
+import { useToggleStore } from './stores/toggleStore'
+import { computed } from 'vue'
 
-const currentComponent = ref('TestChildComponent')
-const switchFlag = ref(false)
-function changeComponents() {
-  if (switchFlag.value) {
-    currentComponent.value = 'TestChildComponent'
-  } else {
-    currentComponent.value = 'TestChildComponentSwitch'
-  }
-  switchFlag.value = !switchFlag.value
-}
+const showModularAddOverlay = computed(
+  () => useToggleStore().addModularItemClicked,
+)
 </script>
 
 <template>
-  <div>
-    <component :is="currentComponent"></component>
-    <button id="switch-component-button" @click="changeComponents">
-      Switch components dynamically
-    </button>
-  </div>
+  <Transition name="slide">
+    <BasicModularAddOverlay
+      v-if="showModularAddOverlay"
+    ></BasicModularAddOverlay>
+  </Transition>
+  <BasicModularComponent></BasicModularComponent>
 </template>
 
 <style scoped>
-#switch-component-button {
-  height: 50px;
-  width: 325px;
-  color: cadetblue;
-  font-size: large;
-  font-weight: bold;
-  border-radius: 10px;
-  border-width: 1px;
-  border-color: aliceblue;
-  border-style: solid;
+/* Slide-in transition */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(100%);
+}
+.slide-enter-to,
+.slide-leave-from {
+  transform: translateX(0);
 }
 </style>
