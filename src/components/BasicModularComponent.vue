@@ -15,6 +15,7 @@ interface SubComponent {
   verticalStart: number
   verticalEnd: number
   color?: '#008000' | '#DC143C'
+  coveredById?: string
 }
 
 const isResizingSubComponent = computed(() => useToggleStore().isResizing)
@@ -95,8 +96,16 @@ function handleMouseOver(item: SubComponent) {
     const resizingComponent = subComponentPositions.value.find(
       (sc) => sc.id === resizingComponentId.value,
     )
-    for (let x = 1; x <= item.horizontalStart; x++) {
-      for (let y = 1; y <= item.verticalStart; y++) {
+    for (
+      let x = resizingComponent!.horizontalStart;
+      x <= item.horizontalStart;
+      x++
+    ) {
+      for (
+        let y = resizingComponent!.verticalStart;
+        y <= item.verticalStart;
+        y++
+      ) {
         const si = subComponentPositions.value.find(
           (si) =>
             si.id !== resizingComponentId.value &&
@@ -114,8 +123,16 @@ function handleMouseOver(item: SubComponent) {
       }
     }
 
-    for (let x = 1; x <= item.horizontalStart; x++) {
-      for (let y = 1; y <= item.verticalStart; y++) {
+    for (
+      let x = resizingComponent!.horizontalStart;
+      x <= item.horizontalStart;
+      x++
+    ) {
+      for (
+        let y = resizingComponent!.verticalStart;
+        y <= item.verticalStart;
+        y++
+      ) {
         const ph = placeholderPositions.value.find(
           (ph) => ph.horizontalStart === x && ph.verticalStart === y,
         )
@@ -138,7 +155,6 @@ function handleMouseLeave() {
 }
 
 function resizeSubComponent(subComponentId: string) {
-  console.log('resizeSubComponent: ', subComponentId)
   const resizePoint = placeholderPositions.value.find(
     (ph) => ph.id === useModularityStore().resizePlaceholderId,
   )
@@ -146,26 +162,28 @@ function resizeSubComponent(subComponentId: string) {
     (sc) => sc.id === subComponentId,
   )
 
-  if (resizableComponent) {
-    resizableComponent.horizontalEnd = resizePoint!.horizontalEnd
-    resizableComponent.verticalEnd = resizePoint!.verticalEnd
-  }
-  if (resizePoint) {
-    console.log('hellooooooo')
-    for (let x = 1; x <= resizePoint.horizontalStart; x++) {
-      for (let y = 1; y <= resizePoint.verticalStart; y++) {
-        placeholderPositions.value.forEach((ph) => {
-          if (
-            ph.horizontalStart <= resizePoint.horizontalStart &&
-            ph.verticalStart <= resizePoint.verticalStart
-          ) {
-            ph.hide = true
-          } else {
-            ph.hide = false
-          }
-        })
+  if (resizableComponent && resizePoint) {
+    resizableComponent.horizontalEnd = resizePoint.horizontalEnd
+    resizableComponent.verticalEnd = resizePoint.verticalEnd
+
+    placeholderPositions.value.forEach((ph) => {
+      // Check if the placeholder is within the bounds of the resizable component
+      const isWithinBounds =
+        ph.horizontalStart >= resizableComponent.horizontalStart &&
+        ph.horizontalStart < resizableComponent.horizontalEnd &&
+        ph.verticalStart >= resizableComponent.verticalStart &&
+        ph.verticalStart < resizableComponent.verticalEnd
+
+      if (isWithinBounds) {
+        ph.hide = true
+        ph.coveredById = subComponentId
+      } else if (ph.coveredById === subComponentId) {
+        // This means the placeholder was previously covered by the current component but not anymore
+        ph.hide = false
+        ph.coveredById = undefined
       }
-    }
+      // For other placeholders not affected by the current component, do nothing
+    })
   }
 }
 </script>

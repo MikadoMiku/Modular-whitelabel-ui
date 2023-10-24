@@ -36,7 +36,7 @@ function stopResizing() {
   height: 20px;
   width: 20px;
   color: violet;
-  top: 0px;
+  bottom: 0px;
   right: 0px;
 }
 
