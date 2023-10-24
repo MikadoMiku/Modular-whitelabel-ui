@@ -5,13 +5,20 @@ import { defineStore } from 'pinia'
 // and `Store` (e.g. `useUserStore`, `useCartStore`, `useProductStore`)
 // the first argument is a unique id of the store across your application
 export const useModularityStore = defineStore('modularity', {
-  state: () => ({ waitingForAddInput: false, chosenComponent: '' }),
+  state: () => ({
+    waitingForAddInput: false,
+    chosenComponent: '',
+    resizingComponentId: '',
+  }),
   actions: {
     toggleWaitingForAddInput() {
       this.waitingForAddInput = !this.waitingForAddInput
     },
     chooseComponent(componentName: string) {
       this.chosenComponent = componentName
+    },
+    setResizingComponentId(id: string) {
+      this.resizingComponentId = id
     },
   },
 })

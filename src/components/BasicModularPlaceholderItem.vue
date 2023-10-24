@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import modularityEmitter from '../emitters/modularityEmitter'
 import { useToggleStore } from '../stores/toggleStore'
 
 const props = defineProps<{
   horizontalAxisPos: number
   verticalAxisPos: number
+  color: string | undefined
+  id: string
 }>()
 const emit = defineEmits(['add-item'])
 const chosenComponent = ref('')
 
-function getRandomColor() {
-  var letters = '0123456789ABCDEF'
-  var color = '#'
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)]
+const isResizing = computed(() => useToggleStore().isResizing)
+const isChoosingComponent = ref(false)
+
+const areaColoration = computed(() => {
+  if (!isResizing.value && !props.color) return {}
+  return {
+    'background-color': props.color,
   }
-  return { 'background-color': color }
-}
+})
 
 function componentChosen(componentName: string) {
   console.log('component chosen')
@@ -32,15 +35,20 @@ function componentChosen(componentName: string) {
 }
 
 function addModularItem() {
-  console.log('hello')
+  if (!isChoosingComponent.value) {
+    console.log('hello')
+    modularityEmitter.on('component-chosen', componentChosen)
+  } else {
+    modularityEmitter.off('component-chosen', componentChosen)
+  }
   useToggleStore().toggleModularItemClicked()
-  modularityEmitter.on('component-chosen', componentChosen)
+  isChoosingComponent.value = !isChoosingComponent.value
 }
 </script>
 
 <template>
-  <div id="placeholder-item" :style="getRandomColor()">
-    <button id="add-item-button" @click="addModularItem">
+  <div id="placeholder-item" :style="areaColoration">
+    <button v-if="!isResizing" id="add-item-button" @click="addModularItem">
       <span id="add-modular-item">+</span>
     </button>
   </div>
@@ -48,6 +56,7 @@ function addModularItem() {
 
 <style scoped>
 #placeholder-item {
+  border: 1px solid black;
   height: 100%;
   width: 100%;
   display: flex;
