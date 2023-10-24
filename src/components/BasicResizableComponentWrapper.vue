@@ -6,6 +6,7 @@ const props = defineProps<{
   componentName: string
   id: string
 }>()
+const emit = defineEmits(['resize-component'])
 
 function startResizing(event: Event) {
   event.preventDefault()
@@ -18,6 +19,7 @@ function stopResizing() {
   useToggleStore().toggleResizing()
   useModularityStore().setResizingComponentId('')
   document.removeEventListener('mouseup', stopResizing)
+  emit('resize-component', props.id)
 }
 </script>
 

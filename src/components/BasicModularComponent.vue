@@ -82,11 +82,6 @@ function addComponent(data: {
 }
 
 function getItemGridPosition(item: SubComponent) {
-  console.log(
-    'getItemGridPosition: ',
-    `${item.horizontalStart} / ${item.horizontalEnd}`,
-    `${item.verticalStart} / ${item.verticalEnd}`,
-  )
   return {
     gridColumn: `${item.horizontalStart} / ${item.horizontalEnd}`,
     gridRow: `${item.verticalStart} / ${item.verticalEnd}`,
@@ -96,12 +91,6 @@ function getItemGridPosition(item: SubComponent) {
 function handleMouseOver(item: SubComponent) {
   if (isResizingSubComponent.value) {
     // Your logic here, like getting the x, y of the hovered element
-    console.log(
-      'Mouse over - X: ',
-      item.horizontalStart,
-      'Mouse over - Y: ',
-      item.verticalStart,
-    )
     // Go over all subcomponents and check if any of them are between starting position
     const resizingComponent = subComponentPositions.value.find(
       (sc) => sc.id === resizingComponentId.value,
@@ -120,6 +109,7 @@ function handleMouseOver(item: SubComponent) {
           isResizeError.value = true
         } else {
           isResizeError.value = false
+          useModularityStore().setResizePlaceholderId(item.id)
         }
       }
     }
@@ -144,6 +134,38 @@ function handleMouseOver(item: SubComponent) {
 function handleMouseLeave() {
   if (isResizingSubComponent.value) {
     placeholderPositions.value.forEach((ph) => (ph.color = undefined))
+  }
+}
+
+function resizeSubComponent(subComponentId: string) {
+  console.log('resizeSubComponent: ', subComponentId)
+  const resizePoint = placeholderPositions.value.find(
+    (ph) => ph.id === useModularityStore().resizePlaceholderId,
+  )
+  const resizableComponent = subComponentPositions.value.find(
+    (sc) => sc.id === subComponentId,
+  )
+
+  if (resizableComponent) {
+    resizableComponent.horizontalEnd = resizePoint!.horizontalEnd
+    resizableComponent.verticalEnd = resizePoint!.verticalEnd
+  }
+  if (resizePoint) {
+    console.log('hellooooooo')
+    for (let x = 1; x <= resizePoint.horizontalStart; x++) {
+      for (let y = 1; y <= resizePoint.verticalStart; y++) {
+        placeholderPositions.value.forEach((ph) => {
+          if (
+            ph.horizontalStart <= resizePoint.horizontalStart &&
+            ph.verticalStart <= resizePoint.verticalStart
+          ) {
+            ph.hide = true
+          } else {
+            ph.hide = false
+          }
+        })
+      }
+    }
   }
 }
 </script>
@@ -171,6 +193,7 @@ function handleMouseLeave() {
       :vertical-axis-pos="item.verticalStart"
       :style="getItemGridPosition(item)"
       :component-name="item.name"
+      @resize-component="resizeSubComponent"
       @mouseover="handleMouseOver(item)"
       @mouseleave="handleMouseLeave()"
     >

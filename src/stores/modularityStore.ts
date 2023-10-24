@@ -9,6 +9,7 @@ export const useModularityStore = defineStore('modularity', {
     waitingForAddInput: false,
     chosenComponent: '',
     resizingComponentId: '',
+    resizePlaceholderId: '',
   }),
   actions: {
     toggleWaitingForAddInput() {
@@ -19,6 +20,9 @@ export const useModularityStore = defineStore('modularity', {
     },
     setResizingComponentId(id: string) {
       this.resizingComponentId = id
+    },
+    setResizePlaceholderId(id: string) {
+      this.resizePlaceholderId = id
     },
   },
 })
