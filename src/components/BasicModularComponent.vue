@@ -22,11 +22,7 @@ const isResizingSubComponent = computed(() => useToggleStore().isResizing)
 const resizingComponentId = computed(
   () => useModularityStore().resizingComponentId,
 )
-watch(isResizingSubComponent, (newValue) => {
-  if (!newValue) {
-    placeholderPositions.value.forEach((ph) => (ph.color = undefined))
-  }
-})
+
 const isResizeError = ref(false)
 const horizontalAxisCount = ref(10)
 const verticalAxisCount = ref(10)
@@ -36,6 +32,17 @@ const verticalAxisCount = ref(10)
 const subComponentPositions = ref<SubComponent[]>([])
 
 const placeholderPositions = ref<SubComponent[]>([])
+
+watch(isResizingSubComponent, (newValue) => {
+  if (!newValue) {
+    placeholderPositions.value.forEach((ph) => {
+      ph.color = undefined
+      ph.hide = ph.coveredById ? true : false
+    })
+  } else {
+    placeholderPositions.value.forEach((ph) => (ph.hide = false))
+  }
+})
 
 const populatePlaceholders = () => {
   for (let x = 1; x <= horizontalAxisCount.value; x++) {

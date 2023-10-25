@@ -1,31 +1,59 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
+const currentDate = ref('')
+const currentTime = ref('')
+
+function getFormattedDate() {
+  const date = new Date()
+  return date.toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function getFormattedTime() {
+  const date = new Date()
+  return date.toLocaleTimeString()
+}
+
+currentDate.value = getFormattedDate()
+currentTime.value = getFormattedTime()
+
+function updateTime() {
+  setInterval(() => {
+    currentTime.value = getFormattedTime()
+  }, 1000)
+}
+
+onMounted(() => {
+  updateTime()
+})
+</script>
 
 <template>
-  <div id="test-body">
-    <div>Hello world!</div>
-    <div class="button-container">
-      <button class="button-test-body">Test button</button>
-    </div>
+  <div class="header-container">
+    <div class="date-time">{{ currentDate }} | {{ currentTime }}</div>
   </div>
 </template>
 
 <style scoped>
-#test-body {
+.header-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
   height: 100%;
-  width: 100%;
-  color: red;
+  background-color: #282c34;
+  color: #61dafb;
+  font-size: 2em;
+  font-family: Arial, sans-serif;
 }
 
-.button-container {
-  height: 50%;
-  width: 100%;
-  background-color: blueviolet;
-}
-
-.button-test-body {
-  color: white;
-  background-color: black;
-  height: 60%;
-  width: 80%;
+.date-time {
+  border: 2px solid #61dafb;
+  border-radius: 10px;
 }
 </style>
