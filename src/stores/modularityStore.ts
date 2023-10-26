@@ -10,6 +10,8 @@ export const useModularityStore = defineStore('modularity', {
     chosenComponent: '',
     resizingComponentId: '',
     resizePlaceholderId: '',
+    movingPlaceholderId: '',
+    movingComponentId: '',
   }),
   actions: {
     toggleWaitingForAddInput() {
@@ -23,6 +25,13 @@ export const useModularityStore = defineStore('modularity', {
     },
     setResizePlaceholderId(id: string) {
       this.resizePlaceholderId = id
+    },
+    setMovingPlaceholderId(id: string) {
+      console.log('setMovingPlaceholderId')
+      this.movingPlaceholderId = id
+    },
+    setMovingComponentId(id: string) {
+      this.movingComponentId = id
     },
   },
 })

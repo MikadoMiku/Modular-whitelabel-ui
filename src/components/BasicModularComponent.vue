@@ -19,9 +19,11 @@ interface SubComponent {
 }
 
 const isResizingSubComponent = computed(() => useToggleStore().isResizing)
+const isMovingSubComponent = computed(() => useToggleStore().isMoving)
 const resizingComponentId = computed(
   () => useModularityStore().resizingComponentId,
 )
+const movingComponentId = computed(() => useModularityStore().movingComponentId)
 
 const isResizeError = ref(false)
 const horizontalAxisCount = ref(10)
@@ -34,6 +36,17 @@ const subComponentPositions = ref<SubComponent[]>([])
 const placeholderPositions = ref<SubComponent[]>([])
 
 watch(isResizingSubComponent, (newValue) => {
+  if (!newValue) {
+    placeholderPositions.value.forEach((ph) => {
+      ph.color = undefined
+      ph.hide = ph.coveredById ? true : false
+    })
+  } else {
+    placeholderPositions.value.forEach((ph) => (ph.hide = false))
+  }
+})
+
+watch(isMovingSubComponent, (newValue) => {
   if (!newValue) {
     placeholderPositions.value.forEach((ph) => {
       ph.color = undefined
@@ -96,67 +109,136 @@ function getItemGridPosition(item: SubComponent) {
   }
 }
 
-function handleMouseOver(item: SubComponent) {
-  if (isResizingSubComponent.value) {
-    // Your logic here, like getting the x, y of the hovered element
-    // Go over all subcomponents and check if any of them are between starting position
-    const resizingComponent = subComponentPositions.value.find(
-      (sc) => sc.id === resizingComponentId.value,
-    )
+function resizingValidation(item: SubComponent) {
+  // Your logic here, like getting the x, y of the hovered element
+  // Go over all subcomponents and check if any of them are between starting position
+  const resizingComponent = subComponentPositions.value.find(
+    (sc) => sc.id === resizingComponentId.value,
+  )
+  for (
+    let x = resizingComponent!.horizontalStart;
+    x <= item.horizontalStart;
+    x++
+  ) {
     for (
-      let x = resizingComponent!.horizontalStart;
-      x <= item.horizontalStart;
-      x++
+      let y = resizingComponent!.verticalStart;
+      y <= item.verticalStart;
+      y++
     ) {
-      for (
-        let y = resizingComponent!.verticalStart;
-        y <= item.verticalStart;
-        y++
-      ) {
-        const si = subComponentPositions.value.find(
-          (si) =>
-            si.id !== resizingComponentId.value &&
-            si.horizontalStart >= resizingComponent!.horizontalStart && // x3 >= x1, true
-            si.horizontalStart <= item.horizontalStart && // x3 <= x3, true
-            si.verticalStart >= resizingComponent!.verticalStart && // y3 >= y1, true
-            si.verticalStart <= item.verticalStart, // y3 <= y2, false
-        )
-        if (si) {
-          isResizeError.value = true
-        } else {
-          isResizeError.value = false
-          useModularityStore().setResizePlaceholderId(item.id)
-        }
+      const si = subComponentPositions.value.find(
+        (si) =>
+          si.id !== resizingComponentId.value &&
+          si.horizontalStart >= resizingComponent!.horizontalStart && // x3 >= x1, true
+          si.horizontalStart <= item.horizontalStart && // x3 <= x3, true
+          si.verticalStart >= resizingComponent!.verticalStart && // y3 >= y1, true
+          si.verticalStart <= item.verticalStart, // y3 <= y2, false
+      )
+      if (si) {
+        isResizeError.value = true
+      } else {
+        isResizeError.value = false
+        useModularityStore().setResizePlaceholderId(item.id)
       }
     }
+  }
 
+  for (
+    let x = resizingComponent!.horizontalStart;
+    x <= item.horizontalStart;
+    x++
+  ) {
     for (
-      let x = resizingComponent!.horizontalStart;
-      x <= item.horizontalStart;
-      x++
+      let y = resizingComponent!.verticalStart;
+      y <= item.verticalStart;
+      y++
     ) {
-      for (
-        let y = resizingComponent!.verticalStart;
-        y <= item.verticalStart;
-        y++
-      ) {
-        const ph = placeholderPositions.value.find(
-          (ph) => ph.horizontalStart === x && ph.verticalStart === y,
-        )
-        if (ph) {
-          if (isResizeError.value) {
-            ph.color = '#DC143C'
-          } else {
-            ph.color = '#008000'
-          }
+      const ph = placeholderPositions.value.find(
+        (ph) => ph.horizontalStart === x && ph.verticalStart === y,
+      )
+      if (ph) {
+        if (isResizeError.value) {
+          ph.color = '#DC143C'
+        } else {
+          ph.color = '#008000'
         }
       }
     }
   }
 }
 
+function movingValidation(item: SubComponent) {
+  const movingComponent = subComponentPositions.value.find(
+    (sc) => sc.id === movingComponentId.value,
+  )
+  if (movingComponent == undefined) return
+  // movingComponent gets us the delta from top left <---> bottom right for x and y
+  // Component starting points are always top left and x and y increase going left to right and top to bottom. This is why you have to subtract X(0) from X(n) etc
+  let xDelta =
+    movingComponent.horizontalEnd - movingComponent.horizontalStart - 1
+  xDelta = xDelta < 0 ? 0 : xDelta
+  let yDelta = movingComponent.verticalEnd - movingComponent.verticalStart - 1
+  yDelta = yDelta < 0 ? 0 : yDelta
+  console.log('validating xDelta: ', xDelta)
+  console.log('validating yDelta: ', yDelta)
+  // Using deltas you can recreate the original component area
+  const newHorizontalAxisStart = item.horizontalStart
+  const newVerticalAxisStart = item.verticalStart
+  const newHorizontalAxisEnd = item.horizontalStart + xDelta
+  const newVerticalAxisEnd = item.verticalStart + yDelta
+  // Check if there are any components in the recreated area
+  console.log(
+    `Cheking area of: X(0) = ${newHorizontalAxisStart} || X(1) = ${newHorizontalAxisEnd}`,
+  )
+  console.log(
+    `Cheking area of: Y(0) = ${newVerticalAxisStart} || Y(1) = ${newVerticalAxisEnd}`,
+  )
+  const overlappingComponent = subComponentPositions.value.find(
+    (si) =>
+      si.id !== movingComponentId.value &&
+      !(
+        newHorizontalAxisStart >= si.horizontalEnd ||
+        newHorizontalAxisEnd <= si.horizontalStart ||
+        newVerticalAxisStart >= si.verticalEnd ||
+        newVerticalAxisEnd <= si.verticalStart
+      ),
+  )
+
+  if (overlappingComponent) {
+    isResizeError.value = true
+  } else {
+    isResizeError.value = false
+    useModularityStore().setMovingPlaceholderId(item.id)
+  }
+
+  for (let x = newHorizontalAxisStart; x <= newHorizontalAxisEnd; x++) {
+    for (let y = newVerticalAxisStart; y <= newVerticalAxisEnd; y++) {
+      const ph = placeholderPositions.value.find(
+        (ph) => ph.horizontalStart === x && ph.verticalStart === y,
+      )
+      if (ph) {
+        if (isResizeError.value) {
+          ph.color = '#DC143C'
+        } else {
+          ph.color = '#008000'
+        }
+      }
+    }
+  }
+}
+
+function handleMouseOver(item: SubComponent) {
+  if (isResizingSubComponent.value) {
+    resizingValidation(item)
+  } else if (isMovingSubComponent.value) {
+    console.log(item.horizontalStart, item.verticalStart)
+    movingValidation(item)
+  }
+}
+
 function handleMouseLeave() {
   if (isResizingSubComponent.value) {
+    placeholderPositions.value.forEach((ph) => (ph.color = undefined))
+  } else if (isMovingSubComponent.value) {
     placeholderPositions.value.forEach((ph) => (ph.color = undefined))
   }
 }
@@ -193,6 +275,51 @@ function resizeSubComponent(subComponentId: string) {
     })
   }
 }
+
+function moveSubComponent(subComponentId: string) {
+  const movingPoint = placeholderPositions.value.find(
+    (ph) => ph.id === useModularityStore().movingPlaceholderId,
+  )
+  const movingComponent = subComponentPositions.value.find(
+    (sc) => sc.id === subComponentId,
+  )
+  if (movingComponent == undefined || movingPoint == undefined) return
+  console.log('moving compoonent')
+  // movingComponent gets us the delta from top left <---> bottom right for x and y
+  // Component starting points are always top left and x and y increase going left to right and top to bottom. This is why you have to subtract X(0) from X(n) etc
+  const xDelta = movingComponent.horizontalEnd - movingComponent.horizontalStart
+  const yDelta = movingComponent.verticalEnd - movingComponent.verticalStart
+  console.log('placing xDelta: ', xDelta)
+  console.log('placing yDelta: ', yDelta)
+  // Using deltas you can recreate the original component area
+  const newHorizontalAxisStart = movingPoint.horizontalStart
+  const newVerticalAxisStart = movingPoint.verticalStart
+  const newHorizontalAxisEnd = movingPoint.horizontalStart + xDelta
+  const newVerticalAxisEnd = movingPoint.verticalStart + yDelta
+  movingComponent.horizontalStart = newHorizontalAxisStart
+  movingComponent.horizontalEnd = newHorizontalAxisEnd
+  movingComponent.verticalStart = newVerticalAxisStart
+  movingComponent.verticalEnd = newVerticalAxisEnd
+
+  placeholderPositions.value.forEach((ph) => {
+    // Check if the placeholder is within the bounds of the resizable component
+    const isWithinBounds =
+      ph.horizontalStart >= movingComponent.horizontalStart &&
+      ph.horizontalStart < movingComponent.horizontalEnd &&
+      ph.verticalStart >= movingComponent.verticalStart &&
+      ph.verticalStart < movingComponent.verticalEnd
+
+    if (isWithinBounds) {
+      ph.hide = true
+      ph.coveredById = subComponentId
+    } else if (ph.coveredById === subComponentId) {
+      // This means the placeholder was previously covered by the current component but not anymore
+      ph.hide = false
+      ph.coveredById = undefined
+    }
+    // For other placeholders not affected by the current component, do nothing
+  })
+}
 </script>
 
 <template>
@@ -219,6 +346,7 @@ function resizeSubComponent(subComponentId: string) {
       :style="getItemGridPosition(item)"
       :component-name="item.name"
       @resize-component="resizeSubComponent"
+      @move-component="moveSubComponent"
       @mouseover="handleMouseOver(item)"
       @mouseleave="handleMouseLeave()"
     >

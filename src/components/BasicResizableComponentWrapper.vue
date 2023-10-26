@@ -7,9 +7,11 @@ const props = defineProps<{
   componentName: string
   id: string
 }>()
-const emit = defineEmits(['resize-component'])
+const emit = defineEmits(['resize-component', 'move-component'])
 
-const isResizing = computed(() => useToggleStore().isResizing)
+const shouldBeTransparent = computed(
+  () => useToggleStore().isResizing || useToggleStore().isMoving,
+)
 
 function startResizing(event: Event) {
   event.preventDefault()
@@ -24,11 +26,29 @@ function stopResizing() {
   document.removeEventListener('mouseup', stopResizing)
   emit('resize-component', props.id)
 }
+
+function startMoving(event: Event) {
+  event.preventDefault()
+  useToggleStore().toggleMoving()
+  useModularityStore().setMovingComponentId(props.id)
+  document.addEventListener('mouseup', stopMoving)
+}
+
+function stopMoving() {
+  useToggleStore().toggleMoving()
+  useModularityStore().setMovingComponentId('')
+  document.removeEventListener('mouseup', stopMoving)
+  emit('move-component', props.id)
+}
 </script>
 
 <template>
-  <div id="wrapper-container" :class="{ 'resizing-transparency': isResizing }">
+  <div
+    id="wrapper-container"
+    :class="{ 'resizing-transparency': shouldBeTransparent }"
+  >
     <div id="corner-drag" @mousedown="startResizing">C</div>
+    <div id="corner-move" @mousedown="startMoving"></div>
     <component :is="componentName" class="wrapper-content"></component>
   </div>
 </template>
@@ -41,6 +61,19 @@ function stopResizing() {
   color: violet;
   bottom: 0px;
   right: 0px;
+  cursor: pointer;
+}
+
+#corner-move {
+  position: absolute;
+  height: 10px;
+  width: 10px;
+  background-color: yellowgreen;
+  border-radius: 50%;
+  top: 10px;
+  left: 10px;
+  scale: 1.5;
+  cursor: pointer;
 }
 
 #wrapper-container {
