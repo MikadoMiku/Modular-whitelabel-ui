@@ -135,6 +135,7 @@ function resizingValidation(item: SubComponent) {
       )
       if (si) {
         isResizeError.value = true
+        useModularityStore().setResizePlaceholderId('')
       } else {
         isResizeError.value = false
         useModularityStore().setResizePlaceholderId(item.id)
@@ -192,19 +193,33 @@ function movingValidation(item: SubComponent) {
   console.log(
     `Cheking area of: Y(0) = ${newVerticalAxisStart} || Y(1) = ${newVerticalAxisEnd}`,
   )
-  const overlappingComponent = subComponentPositions.value.find(
-    (si) =>
-      si.id !== movingComponentId.value &&
-      !(
-        newHorizontalAxisStart >= si.horizontalEnd ||
-        newHorizontalAxisEnd <= si.horizontalStart ||
-        newVerticalAxisStart >= si.verticalEnd ||
-        newVerticalAxisEnd <= si.verticalStart
-      ),
-  )
+  const movingComponentCoords: string[] = []
+  for (let x = newHorizontalAxisStart; x <= newHorizontalAxisEnd; x++) {
+    for (let y = newVerticalAxisStart; y <= newVerticalAxisEnd; y++) {
+      movingComponentCoords.push(`${x},${y}`)
+    }
+  }
+  console.log('movingComponentCoords: ', movingComponentCoords)
+
+  const overlappingComponent = subComponentPositions.value.find((si) => {
+    if (si.id === movingComponentId.value) return false // skip self-check
+
+    // Generate list of coordinates for existing component si
+    const siCoords = []
+    for (let x = si.horizontalStart; x < si.horizontalEnd; x++) {
+      for (let y = si.verticalStart; y < si.verticalEnd; y++) {
+        siCoords.push(`${x},${y}`)
+      }
+    }
+    console.log('siCoords: ', siCoords)
+
+    // Check for any matching coordinates
+    return siCoords.some((coord) => movingComponentCoords.includes(coord))
+  })
 
   if (overlappingComponent) {
     isResizeError.value = true
+    useModularityStore().setMovingPlaceholderId('')
   } else {
     isResizeError.value = false
     useModularityStore().setMovingPlaceholderId(item.id)
