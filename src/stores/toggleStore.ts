@@ -5,7 +5,11 @@ import { defineStore } from 'pinia'
 // and `Store` (e.g. `useUserStore`, `useCartStore`, `useProductStore`)
 // the first argument is a unique id of the store across your application
 export const useToggleStore = defineStore('toggles', {
-  state: () => ({ addModularItemClicked: false, isResizing: false }),
+  state: () => ({
+    addModularItemClicked: false,
+    isResizing: false,
+    isMoving: false,
+  }),
   actions: {
     toggleModularItemClicked() {
       this.addModularItemClicked = !this.addModularItemClicked
@@ -13,6 +17,10 @@ export const useToggleStore = defineStore('toggles', {
     toggleResizing() {
       console.log('toggle resizing')
       this.isResizing = !this.isResizing
+    },
+    toggleMoving() {
+      console.log('toggle moving')
+      this.isMoving = !this.isMoving
     },
   },
 })

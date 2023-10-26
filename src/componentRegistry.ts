@@ -1,8 +1,13 @@
 // componentRegistry.js
-const globalComponents: string[] = []
+interface RegisteredComponent {
+  logicalName: string
+  userViewableName: string
+}
 
-export function registerComponent(name: string) {
-  globalComponents.push(name)
+const globalComponents: RegisteredComponent[] = []
+
+export function registerComponent(component: RegisteredComponent) {
+  globalComponents.push(component)
 }
 
 export function getAllComponents() {

@@ -26,9 +26,9 @@ function chooseComponent(componentName: string) {
         <button
           v-for="(component, index) in registeredComponents"
           :key="index"
-          @click="chooseComponent(component)"
+          @click="chooseComponent(component.logicalName)"
         >
-          {{ component }}
+          {{ component.userViewableName }}
         </button>
       </div>
     </div>
