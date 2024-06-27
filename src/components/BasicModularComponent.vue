@@ -26,8 +26,8 @@ const resizingComponentId = computed(
 const movingComponentId = computed(() => useModularityStore().movingComponentId)
 
 const isResizeError = ref(false)
-const horizontalAxisCount = ref(10)
-const verticalAxisCount = ref(10)
+const horizontalAxisCount = ref(16)
+const verticalAxisCount = ref(16)
 /* const totalAxisItems = computed(
   () => horizontalAxisCount.value * verticalAxisCount.value,
 ) */
@@ -335,6 +335,34 @@ function moveSubComponent(subComponentId: string) {
     // For other placeholders not affected by the current component, do nothing
   })
 }
+
+function deleteSubComponent(subComponentId: string) {
+  console.log('deleting component')
+  const deepCopy = JSON.parse(JSON.stringify(subComponentPositions.value))
+  const deletableIndex = deepCopy.findIndex(
+    (sc: any) => sc.id === subComponentId,
+  )
+  console.log('deletableIndex: ', deletableIndex)
+  if (deletableIndex !== -1) {
+    const component = subComponentPositions.value[deletableIndex]
+    deepCopy.splice(deletableIndex, 1)
+    subComponentPositions.value = deepCopy as SubComponent[]
+    placeholderPositions.value.forEach((ph) => {
+    // Check if the placeholder is within the bounds of the resizable component
+    const isWithinBounds =
+      ph.horizontalStart >= component.horizontalStart &&
+      ph.horizontalStart < component.horizontalEnd &&
+      ph.verticalStart >= component.verticalStart &&
+      ph.verticalStart < component.verticalEnd
+
+    if (isWithinBounds) {
+      ph.hide = false
+      ph.coveredById = undefined
+    }
+    // For other placeholders not affected by the current component, do nothing
+  })
+  }
+}
 </script>
 
 <template>
@@ -364,6 +392,7 @@ function moveSubComponent(subComponentId: string) {
       @move-component="moveSubComponent"
       @mouseover="handleMouseOver(item)"
       @mouseleave="handleMouseLeave()"
+      @delete-component="deleteSubComponent"
     >
     </BasicResizableComponentWrapper>
   </div>
